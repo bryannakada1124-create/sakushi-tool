@@ -2,91 +2,119 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="作詞連想">
-    <title>ナルキ式・作詞連想ツール v7.5 (管理機能付)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ナルキ式・作詞連想ツール v7.6</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; padding: 15px; background: #121212; color: #e0e0e0; margin: 0; line-height: 1.6; -webkit-tap-highlight-color: transparent; }
-        .container { max-width: 600px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #333; box-sizing: border-box; }
-        .nav-buttons { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        button { padding: 12px 16px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; }
-        .btn-save { background: #2ecc71; color: white; }
-        .btn-load { background: #3498db; color: white; }
-        .btn-import { background: #9b59b6; color: white; }
-        .btn-ai { background: #f39c12; color: white; }
-        .btn-danger { background: #e74c3c; color: white; margin-top: 20px; width: 100%; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: white; box-sizing: border-box; font-size: 16px; }
-        .word-card { background: #2d2d2d; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #3498db; position: relative; }
-        .ruby { font-size: 0.85em; color: #aaa; }
-        .boin { color: #3498db; font-weight: bold; margin-left: 8px; }
-        #importArea { display: none; margin-top: 15px; border: 1px dashed #555; padding: 15px; border-radius: 10px; }
-        .hidden { display: none; }
-        .ai-chip { display: inline-block; background: #333; padding: 5px 12px; border-radius: 20px; margin: 4px; cursor: pointer; border: 1px solid #555; font-size: 14px; }
-        .ai-chip:hover { background: #444; }
+        body { font-family: sans-serif; padding: 15px; background: #121212; color: #e0e0e0; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        button { padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; margin: 5px 0; }
+        .btn-save { background: #2ecc71; color: white; width: 100%; }
+        .btn-sub { background: #3498db; color: white; flex: 1; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: white; box-sizing: border-box; }
+        .word-card { background: #2d2d2d; padding: 10px; border-radius: 8px; margin-bottom: 8px; position: relative; border-left: 4px solid #3498db; }
+        .ruby { font-size: 0.8em; color: #aaa; }
+        .nav-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="margin-top:0; color:#3498db;">RHYME STUDIO v7.5</h2>
+    <h2>RHYME STUDIO v7.6</h2>
     
     <div class="nav-buttons">
-        <button class="btn-save" onclick="exportData()">💾 保存(DL)</button>
-        <button class="btn-load" onclick="document.getElementById('fileInput').click()">📂 ファイル読込</button>
-        <button class="btn-import" onclick="toggleImportArea()">📋 テキスト復元</button>
-        <input type="file" id="fileInput" class="hidden" onchange="importFromFile(event)">
-    </div>
-
-    <div id="importArea">
-        <p style="font-size: 0.8em; color: #bbb; margin-top:0;">バックアップ用テキストを貼り付けてください：</p>
-        <textarea id="manualText" rows="4" placeholder='[{"name":"言葉","ruby":"かな",...}]'></textarea>
-        <button class="btn-import" style="width: 100%;" onclick="manualImport()">データを適用する</button>
+        <button class="btn-sub" onclick="exportData()">💾 保存(DL)</button>
+        <button class="btn-sub" onclick="document.getElementById('fileInput').click()">📂 読込</button>
+        <input type="file" id="fileInput" style="display:none" onchange="importFromFile(event)">
     </div>
 
     <div class="input-section">
-        <h3 style="margin-bottom:10px;">新規登録</h3>
-        <input type="text" id="newName" placeholder="表示名 (歌詞での表記)">
-        <input type="text" id="newRuby" placeholder="かな (読み)" oninput="updatePreviews()">
-        <div style="margin: 10px 0; font-size: 0.9em;">
-            母音: <span id="vowels" class="boin">-</span> 
-            / 音数: <span id="count" style="color:#2ecc71; font-weight:bold;">-</span>
-        </div>
-        <button class="btn-save" style="width: 100%; margin-bottom:10px;" onclick="addWord()">保存</button>
-        <button class="btn-ai" style="width: 100%;" onclick="askAI()">✨ AIに関連ワードを聞く</button>
-        <div id="aiResults" style="margin-top:10px;"></div>
+        <input type="text" id="newName" placeholder="歌詞（例：青空）">
+        <input type="text" id="newRuby" placeholder="かな（例：あおぞら）">
+        <button class="btn-save" onclick="addWord()">単語を登録する</button>
     </div>
 
     <div id="wordList">
-        <h3 id="listCount">登録済み単語 (0件)</h3>
+        <h3>登録済み単語</h3>
     </div>
-
-    <button class="btn-danger" onclick="clearAllData()">⚠️ 全データを消去してリセット</button>
 </div>
 
 <script>
-    const apiKey = ""; 
-    let words = JSON.parse(localStorage.getItem('lyricData')) || [];
-
-    function getVowels(str) {
-        const map = {
-            'あ':'a','い':'i','う':'u','え':'e','お':'o','か':'a','き':'i','く':'u','け':'e','こ':'o','さ':'a','し':'i','す':'u','せ':'e','そ':'o','た':'a','ち':'i','つ':'u','て':'e','と':'o','な':'a','に':'i','ぬ':'u','ね':'e','の':'o','は':'a','ひ':'i','ふ':'u','へ':'e','ほ':'o','ま':'a','み':'i','む':'u','め':'e','も':'o','や':'a','ゆ':'u','よ':'o','ら':'a','り':'i','る':'u','れ':'e','ろ':'o','わ':'a','を':'o','ん':'n','が':'a','ぎ':'i','ぐ':'u','げ':'e','ご':'o','ざ':'a','じ':'i','ず':'u','ぜ':'e','ぞ':'o','だ':'a','ぢ':'i','づ':'u','で':'e','ど':'o','ば':'a','び':'i','ぶ':'u','べ':'e','ぼ':'o','ぱ':'a','ぴ':'i','ぷ':'u','ぺ':'e','ぽ':'o','きゃ':'a','きゅ':'u','きょ':'o','しゃ':'a','しゅ':'u','しょ':'o','ちゃ':'a','ちゅ':'u','ちょ':'o','にゃ':'a','にゅ':'u','にょ':'o','ひゃ':'a','ひゅ':'u','ひょ':'o','みゃ':'a','みゅ':'u','みょ':'o','りゃ':'a','りゅ':'u','りょ':'o'
-        };
-        let res = "";
-        for(let i=0; i<str.length; i++) {
-            if(map[str[i]+str[i+1]]) { res += map[str[i]+str[i+1]]; i++; }
-            else if(map[str[i]]) { res += map[str[i]]; }
-        }
-        return res;
-    }
-
-    function updatePreviews() {
-        const ruby = document.getElementById('newRuby').value;
-        document.getElementById('vowels').innerText = getVowels(ruby) || "-";
-        document.getElementById('count').innerText = ruby.length || "-";
+    // データをブラウザから読み込む
+    let words = [];
+    try {
+        const saved = localStorage.getItem('lyricData');
+        if (saved) words = JSON.parse(saved);
+    } catch (e) {
+        console.error("データ読み込みエラー", e);
+        words = [];
     }
 
     function render() {
         const list = document.getElementById('wordList');
-        list.innerHTML = `<h3 id="listCount">登録
+        list.innerHTML = `<h3>登録済み単語 (${words.length}件)</h3>`;
+        
+        words.forEach((w, index) => {
+            const card = document.createElement('div');
+            card.className = 'word-card';
+            card.innerHTML = `
+                <div class="ruby">${w.ruby}</div>
+                <div style="font-weight:bold;">${w.name}</div>
+                <button onclick="deleteWord(${index})" style="position:absolute; right:10px; top:10px; background:none; color:#e74c3c; border:none;">✕</button>
+            `;
+            list.appendChild(card);
+        });
+        // ブラウザに保存
+        localStorage.setItem('lyricData', JSON.stringify(words));
+    }
+
+    function addWord() {
+        const name = document.getElementById('newName').value.trim();
+        const ruby = document.getElementById('newRuby').value.trim();
+        
+        if(!name || !ruby) {
+            alert("歌詞とかなの両方を入力してください");
+            return;
+        }
+
+        words.push({name, ruby});
+        document.getElementById('newName').value = '';
+        document.getElementById('newRuby').value = '';
+        render();
+    }
+
+    function deleteWord(index) {
+        if(confirm('削除しますか？')) {
+            words.splice(index, 1);
+            render();
+        }
+    }
+
+    function exportData() {
+        const data = JSON.stringify(words, null, 2);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lyrics_data.json`;
+        a.click();
+    }
+
+    function importFromFile(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                words = JSON.parse(event.target.result);
+                render();
+            } catch(err) { alert('ファイルが壊れているか、形式が違います'); }
+        };
+        reader.readAsText(file);
+    }
+
+    // 最初に表示
+    render();
+</script>
+
+</body>
+</html>
